@@ -24,14 +24,23 @@ func TestUDPInflux(t *testing.T) {
 
 func TestHTTPInflux(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintln(w, `{"results":[{}]}`)
+		switch r.URL.Path {
+		case "/write":
+			w.WriteHeader(http.StatusNoContent)
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprintln(w, `{"results":[{}]}`)
+		case "/query":
+			w.WriteHeader(http.StatusOK)
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprintln(w, `{"results":[{}]}`)
+		}
+
 	}))
 	defer ts.Close()
 
 	i := InfluxDB{
-		URLs: []string{ts.URL},
+		URLs:     []string{ts.URL},
+		Database: "test",
 	}
 
 	err := i.Connect()
